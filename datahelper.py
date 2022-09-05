@@ -87,6 +87,20 @@ class Datahelper:
 
                 self.to_csv(df_dict=(filename, df))
 
+    def to_csv(self, df_dict=None):
+        """
+        The method saves a dataframe as csv. The df is stored as value in a dict with corresponding df name as key.
+        :param df_dict:
+        :return:
+        """
+        df_dict[1].to_csv(
+            path_or_buf=f"{self.oeo_annotation_path}/{df_dict[0]}",
+            index=False,
+            encoding="utf-8",
+            sep=";",
+        )
+
+
 
 def get_files_from_directory(directory: str = None) -> list:
     """
