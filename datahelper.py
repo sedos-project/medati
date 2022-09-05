@@ -112,3 +112,12 @@ def get_files_from_directory(directory: str = None) -> list:
     files = [f for f in glob.glob(f"{directory}/*.csv")]
 
     return files
+
+
+if __name__ == "__main__":
+
+    OEO_ANNOTATION_DIR = "data/oeo_annotation"
+
+    datahelper = Datahelper()
+
+    datahelper.add_empty_colums_next_to_annotable_string_columns()
