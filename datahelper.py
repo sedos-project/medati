@@ -100,6 +100,22 @@ class Datahelper:
             sep=";",
         )
 
+    ### metadata related-methods -> extra class
+
+    def read_annotation_pairs(self):
+        """
+        The method reads user-defined columns and corresponding annotation columns with annotations.
+        :return:
+        """
+        pass
+
+    def save_annotation_pairs_to_dict(self):
+        """
+        The method saves concept and annotation pairs as dict.
+        :return:
+        """
+        pass
+
 
 
 def get_files_from_directory(directory: str = None) -> list:
