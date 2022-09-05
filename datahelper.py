@@ -39,3 +39,15 @@ class Datahelper:
         os.makedirs(self.oeo_annotation_path, exist_ok=True)
 
         self.df_dict = self.prepare_df_dict(directory=self.csv_dir)
+
+
+def get_files_from_directory(directory: str = None) -> list:
+    """
+    The function takes a path as input and returns all csv-file paths in the directory as a list.
+    :rtype: object
+    :param directory: csv directory path
+    :return: files - list of csv file paths
+    """
+    files = [f for f in glob.glob(f"{directory}/*.csv")]
+
+    return files
