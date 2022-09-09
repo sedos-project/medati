@@ -106,6 +106,23 @@ class Datahelper:
 
         return json_dict_user_col
 
+    def create_version_dict(self) -> dict:
+        """
+        The method inserts a version as value for each user-defined column. The version is the date of today.
+        :rtype: object
+        :return: version_dict:
+        """
+
+        json_dict_user_col = self.create_json_dict_from_user_defined_columns()
+
+        df = pd.DataFrame.from_dict(json_dict_user_col, orient="index")
+
+        df.where(df.isna(), (today.strftime("%d/%m/%Y")), inplace=True)
+
+        version_dict = {k: v.dropna().to_dict() for k, v in df.T.items()}
+
+        return version_dict
+
     def to_csv(self, df_dict=None):
         """
         The method saves a dataframe as csv. The df is stored as value in a dict with corresponding df name as key.
