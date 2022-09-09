@@ -123,6 +123,22 @@ class Datahelper:
 
         return version_dict
 
+    def insert_user_column_dict_in_csv(self, columns=None):
+        """
+        The method inserts each csv specific version dicts in respective csvs.
+        :type columns: object
+        :param columns: Specify one of: version, other, all
+        :return:
+        """
+        version_dict = self.create_version_dict()
+        # todo: rewrite function that it takes arguments 1. version, 2. other - to have only one function that inserts version_json or json_dict_user_col in the other columns
+        for index, (filename, df) in enumerate(self.df_dict.items()):
+            # get matching-file-version_dict and insert in version column
+            # todo: integrate check whether each row is already filled with version or not
+            df["version"] = f"{version_dict.get(filename)}"
+
+            self.to_csv(df_dict=(filename, df))
+
     def to_csv(self, df_dict=None):
         """
         The method saves a dataframe as csv. The df is stored as value in a dict with corresponding df name as key.
