@@ -87,6 +87,25 @@ class Datahelper:
 
                 self.to_csv(df_dict=(filename, df))
 
+    def create_json_dict_from_user_defined_columns(self):
+        # read columns and make dict with column names as keys and current timestamp as value
+
+        user_defined_cols_dict = {
+            (df_name): (set(value.columns.tolist()) - set(self.oedatamodel_col_list))
+            for (df_name, value) in self.df_dict.items()
+        }
+
+        # todo: Think about working with pd.DataFrame.from_dict here
+        json_dict_user_col = {}
+        for df_name, user_cols in user_defined_cols_dict.items():
+            csv_dict = {}
+            for user_col in user_cols:
+                csv_dict[user_col] = ""
+
+            json_dict_user_col[df_name] = csv_dict
+
+        return json_dict_user_col
+
     def to_csv(self, df_dict=None):
         """
         The method saves a dataframe as csv. The df is stored as value in a dict with corresponding df name as key.
