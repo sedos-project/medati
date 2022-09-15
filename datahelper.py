@@ -139,6 +139,13 @@ class Datahelper:
 
             self.to_csv(df_dict=(filename, df))
 
+    def make_each_string_col_unique_values(self):
+        """
+        This method reduces each column to annotate to its unique values.
+        :return: df
+        """
+        pass
+
     def to_csv(self, df_dict=None):
         """
         The method saves a dataframe as csv. The df is stored as value in a dict with corresponding df name as key.
