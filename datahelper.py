@@ -2,7 +2,7 @@ import pandas as pd
 import glob
 import os
 
-from datetime import date
+from datetime import datetime
 
 class Datahelper:
     """
@@ -39,6 +39,8 @@ class Datahelper:
         os.makedirs(self.oeo_annotation_path, exist_ok=True)
 
         self.df_dict = self.prepare_df_dict(directory=self.csv_dir)
+
+        self.now = datetime.now()
 
     def prepare_df_dict(self, directory: str = None) -> dict:
         """
@@ -117,7 +119,7 @@ class Datahelper:
 
         df = pd.DataFrame.from_dict(json_dict_user_col, orient="index")
 
-        df.where(df.isna(), (today.strftime("%d/%m/%Y")), inplace=True)
+        df.where(df.isna(), (self.now.strftime("%d/%m/%Y")), inplace=True)
 
         version_dict = {k: v.dropna().to_dict() for k, v in df.T.items()}
 
@@ -195,4 +197,4 @@ if __name__ == "__main__":
 
     datahelper = Datahelper()
 
-    datahelper.add_empty_colums_next_to_annotable_string_columns()
+    datahelper.create_version_dict()
