@@ -40,22 +40,22 @@ class Datahelper:
 
         self.df_dict = self.prepare_df_dict(directory=self.csv_dir)
 
-        def prepare_df_dict(self, directory: str = None) -> dict:
-            """
-            The method reads all csv's into pandas dataframes and saves them with their names in a dict.
-            :param directory: Path to csv files.
-            :return: df_dict: Key -> df name; Value -> df.
-            """
-            files: list = get_files_from_directory(directory)
+    def prepare_df_dict(self, directory: str = None) -> dict:
+        """
+        The method reads all csv's into pandas dataframes and saves them with their names in a dict.
+        :param directory: Path to csv files.
+        :return: df_dict: Key -> df name; Value -> df.
+        """
+        files: list = get_files_from_directory(directory)
 
-            df_list = [pd.read_csv(filepath_or_buffer=file, sep=";") for file in files]
+        df_list = [pd.read_csv(filepath_or_buffer=file, sep=";") for file in files]
 
-            # zip only filename from path and dataframe
-            df_dict = dict(zip([file.split("\\")[-1] for file in files], df_list))
+        # zip only filename from path and dataframe
+        df_dict = dict(zip([file.split("\\")[-1] for file in files], df_list))
 
-            return df_dict
+        return df_dict
 
-        def add_empty_colums_next_to_annotable_string_columns(self):
+    def add_empty_colums_next_to_annotable_string_columns(self):
             """
             The method creates an empty column next to each user-defined annotatable column.
             :param csv:
