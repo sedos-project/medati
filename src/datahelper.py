@@ -4,15 +4,7 @@ import os
 
 from datetime import datetime
 
-
-class Datahelper:
-    """
-    The class helps ontologically annotating input data files and creating metadata.
-    """
-
-    def __init__(self):
-
-        self.oedatamodel_col_list = [
+OEDATAMODEL_COL_LIST = [
             "id",
             "region",
             "year",
@@ -25,13 +17,21 @@ class Datahelper:
             "source",
             "comment",
         ]
-        self.json_col_list = [
-            "bandwidth_type",
-            "version",
-            "method",
-            "source",
-            "comment",
-        ]
+
+JSON_COL_LIST = [
+    "bandwidth_type",
+    "version",
+    "method",
+    "source",
+    "comment",
+]
+
+class Datahelper:
+    """
+    The class helps ontologically annotating input data files and creating metadata.
+    """
+
+    def __init__(self):
 
         # define paths for csv and oeo_annotation folder
         self.csv_dir = os.path.join(os.getcwd(), "data", "input")
@@ -74,7 +74,7 @@ class Datahelper:
 
                 if (
                     isinstance(df.dtypes[col_header], object)
-                    and col_header not in self.oedatamodel_col_list
+                    and col_header not in OEDATAMODEL_COL_LIST
                 ):
                     # TODO: Currently, the if-check only checks for objects.
                     #       [1,2,3] & Europe -> object
@@ -94,7 +94,7 @@ class Datahelper:
         # read columns and make dict with column names as keys and current timestamp as value
 
         user_defined_cols_dict = {
-            (df_name): (set(value.columns.tolist()) - set(self.oedatamodel_col_list))
+            (df_name): (set(value.columns.tolist()) - set(OEDATAMODEL_COL_LIST))
             for (df_name, value) in self.df_dict.items()
         }
 
