@@ -85,9 +85,7 @@ class Datahelper:
 
         df.where(df.isna(), (self.now.strftime("%d/%m/%Y")), inplace=True)
 
-        version_dict = {k: v.dropna().to_dict() for k, v in df.T.items()}
-
-        return version_dict
+        return {k: v.dropna().to_dict() for k, v in df.T.items()}
 
     def insert_user_column_dict_in_csv(self, columns=None):
         """
@@ -127,9 +125,8 @@ def get_files_from_directory(directory: str = None) -> list:
     :param directory: csv directory path
     :return: files - list of csv file paths
     """
-    files = [f for f in glob.glob(f"{directory}/*.csv")]
 
-    return files
+    return [f for f in glob.glob(f"{directory}/*.csv")]
 
 
 if __name__ == "__main__":
