@@ -50,13 +50,7 @@ class Datahelper:
         :return: df_dict: Key -> df name; Value -> df.
         """
         files: list = get_files_from_directory(directory)
-
-        df_list = [pd.read_csv(filepath_or_buffer=file, sep=";") for file in files]
-
-        # zip only filename from path and dataframe
-        df_dict = dict(zip([file.split("\\")[-1] for file in files], df_list))
-
-        return df_dict
+        return {file.split("\\")[-1]: pd.read_csv(filepath_or_buffer=file, sep=";") for file in files}
 
     def add_empty_colums_next_to_annotable_string_columns(self):
         """
