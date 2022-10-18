@@ -53,38 +53,6 @@ class Datahelper:
 
         return {file.split("\\")[-1]: pd.read_csv(filepath_or_buffer=file, sep=";") for file in files}
 
-    def add_empty_colums_next_to_annotable_string_columns(self):
-        """
-        The method creates an empty column next to each user-defined annotatable column.
-        :param csv:
-        :return:
-        """
-
-        # add empty columns next to columns that at least one string
-        for filename, df in self.df_dict.items():
-            # offset index for column insertion to right for each added column
-            offset_index = 0
-
-            for col_index, col_header in enumerate(df.columns):
-
-                if (
-                    isinstance(df.dtypes[col_header], object)
-                    and col_header not in OEDATAMODEL_COL_LIST
-                ):
-                    # TODO: Currently, the if-check only checks for objects.
-                    #       [1,2,3] & Europe -> object
-                    #       np.nan -> float64
-                    #       Implement a if-check that only creates empty cols next to cols that contain strings such as "Europe" and not [1,2,3], which is used as bandwidth and there is nothing to annotate
-                    df.insert(
-                        loc=col_index + 1 + offset_index,
-                        column=col_header + "_isAbout",
-                        value="valueReference",
-                    )
-                    # offset index for column insertion to right for each added column, increase by 1 for each column
-                    offset_index += 1
-
-            self.to_csv(df_dict=(filename, df))
-
     def create_json_dict_from_user_defined_columns(self):
         # read columns and make dict with column names as keys and current timestamp as value
 
@@ -137,12 +105,6 @@ class Datahelper:
 
             self.to_csv(df_dict=(filename, df))
 
-    def make_each_string_col_unique_values(self):
-        """
-        This method reduces each column to annotate to its unique values.
-        :return: df
-        """
-        pass
 
     def to_csv(self, df_dict=None):
         """
@@ -156,22 +118,6 @@ class Datahelper:
             encoding="utf-8",
             sep=";",
         )
-
-    ### metadata related-methods -> extra class
-
-    def read_annotation_pairs(self):
-        """
-        The method reads user-defined columns and corresponding annotation columns with annotations.
-        :return:
-        """
-        pass
-
-    def save_annotation_pairs_to_dict(self):
-        """
-        The method saves concept and annotation pairs as dict.
-        :return:
-        """
-        pass
 
 
 def get_files_from_directory(directory: str = None) -> list:
@@ -192,4 +138,4 @@ if __name__ == "__main__":
 
     datahelper = Datahelper()
 
-    datahelper.create_version_dict()
+    print(datahelper.create_json_dict_from_user_defined_columns())
