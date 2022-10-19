@@ -30,6 +30,7 @@ repos:
         types: [python]
       - id: pylint
         name: pylint
+        entry: pylint
         language: system
         types: [python]
         args:
