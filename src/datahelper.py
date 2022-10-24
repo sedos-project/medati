@@ -1,22 +1,26 @@
-import pandas as pd
+"""
+The datahelper helps to format input data files.
+"""
+
 import glob
 import os
-
 from datetime import datetime
 
+import pandas as pd
+
 OEDATAMODEL_COL_LIST = [
-            "id",
-            "region",
-            "year",
-            "timeindex_resolution",
-            "timeindex_start",
-            "timeindex_stop",
-            "bandwidth_type",
-            "version",
-            "method",
-            "source",
-            "comment",
-        ]
+    "id",
+    "region",
+    "year",
+    "timeindex_resolution",
+    "timeindex_start",
+    "timeindex_stop",
+    "bandwidth_type",
+    "version",
+    "method",
+    "source",
+    "comment",
+]
 
 JSON_COL_LIST = [
     "bandwidth_type",
@@ -25,6 +29,7 @@ JSON_COL_LIST = [
     "source",
     "comment",
 ]
+
 
 class Datahelper:
     """
@@ -51,7 +56,10 @@ class Datahelper:
         """
         files: list = get_files_from_directory(directory)
 
-        return {file.split("\\")[-1]: pd.read_csv(filepath_or_buffer=file, sep=";") for file in files}
+        return {
+            file.split("\\")[-1]: pd.read_csv(filepath_or_buffer=file, sep=";")
+            for file in files
+        }
 
     def create_json_dict_from_user_defined_columns(self):
         """
@@ -66,49 +74,30 @@ class Datahelper:
 
         json_dict_user_col = {}
         for df_name, user_cols in user_defined_cols_dict.items():
-            csv_dict = {}
-            for user_col in user_cols:
-                csv_dict[user_col] = ""
-
+            csv_dict = {user_col: "" for user_col in user_cols}
             json_dict_user_col[df_name] = csv_dict
 
         return json_dict_user_col
 
-    def create_version_dict(self) -> dict:
-        """
-        The method inserts a version as value for each user-defined column. The version is the date of today.
-        :rtype: object
-        :return: version_dict:
-        """
-
-        json_dict_user_col = self.create_json_dict_from_user_defined_columns()
-
-        df = pd.DataFrame.from_dict(json_dict_user_col, orient="index")
-
-        df.where(df.isna(), (self.now.strftime("%d/%m/%Y")), inplace=True)
-
-        return {k: v.dropna().to_dict() for k, v in df.T.items()}
-
-    def insert_user_column_dict_in_csv(self, columns=None):
+    def insert_user_column_dict_in_csv(self):
         """
         The method inserts each csv specific version dicts in respective csvs.
         :type columns: object
         :param columns: Specify one of: version, other, all
         :return:
         """
-        version_dict = self.create_version_dict()
-        # todo: rewrite function that it takes arguments 1. version, 2. other - to have only one function that inserts version_json or json_dict_user_col in the other columns
-        for index, (filename, df) in enumerate(self.df_dict.items()):
-            # get matching-file-version_dict and insert in version column
-            # todo: integrate check whether each row is already filled with version or not
-            df["version"] = f"{version_dict.get(filename)}"
+        json_dict_user_col = self.create_json_dict_from_user_defined_columns()
 
-            self.to_csv(df_dict=(filename, df))
+        for filename, df_data in self.df_dict.items():
+            for column in JSON_COL_LIST:
+                df_data[column] = f"{json_dict_user_col.get(filename)}"
 
+            self.to_csv(df_dict=(filename, df_data))
 
     def to_csv(self, df_dict=None):
         """
-        The method saves a dataframe as csv. The df is stored as value in a dict with corresponding df name as key.
+        The method saves a dataframe as csv.
+        The df is stored as value in a dict with corresponding df name as key.
         :param df_dict: Key -> df name; Value -> df.
         :return:
         """
@@ -128,7 +117,7 @@ def get_files_from_directory(directory: str = None) -> list:
     :return: files - list of csv file paths
     """
 
-    return [f for f in glob.glob(f"{directory}/*.csv")]
+    return list(glob.glob(f"{directory}/*.csv"))
 
 
 if __name__ == "__main__":
@@ -138,3 +127,5 @@ if __name__ == "__main__":
     datahelper = Datahelper()
 
     print(datahelper.create_json_dict_from_user_defined_columns())
+
+    datahelper.insert_user_column_dict_in_csv()
