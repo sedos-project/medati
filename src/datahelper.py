@@ -61,16 +61,25 @@ class Datahelper:
             for file in files
         }
 
+    def return_user_defined_columns(self):
+        """
+        The method returns user defined columns that are neither columns
+        of the oedatamodel-parameter scalar or timeseries.
+        :return: dict: Key -> df name: str ; Value -> user_defined_columns: dict.
+        """
+
+        return {
+            (df_name): (set(value.columns.tolist()) - set(OEDATAMODEL_COL_LIST))
+            for (df_name, value) in self.df_dict.items()
+        }
+
     def create_json_dict_from_user_defined_columns(self):
         """
         The method reads columns and returns dict with column names as keys and empty value.
         :param df_dict: Key -> df name; Value -> df.
         :return: dict: Key -> df name; Value -> json_dict_from_user_defined_columns.
         """
-        user_defined_cols_dict = {
-            (df_name): (set(value.columns.tolist()) - set(OEDATAMODEL_COL_LIST))
-            for (df_name, value) in self.df_dict.items()
-        }
+        user_defined_cols_dict = self.return_user_defined_columns()
 
         json_dict_user_col = {}
         for df_name, user_cols in user_defined_cols_dict.items():
