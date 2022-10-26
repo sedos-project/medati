@@ -89,6 +89,14 @@ class Datahelper:
 
         return json_dict_user_col
 
+    def to_dataframe(self):
+        """
+        Return DataFrame as generator object - use one DataFrame at a the time.
+        :return:DataFrame: generator object
+        """
+
+        yield from self.df_dict.values()
+
     def insert_user_column_dict_in_csv(self):
         """
         The method inserts each csv specific version dicts in respective csvs.
