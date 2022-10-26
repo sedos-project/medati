@@ -36,15 +36,16 @@ class Datahelper:
     The class helps ontologically annotating input data files and creating metadata.
     """
 
-    def __init__(self):
+    def __init__(self, input_path: str = None, output_path: str = None):
 
         # define paths for csv and oeo_annotation folder
-        self.csv_dir = os.path.join(os.getcwd(), "data", "input")
-        self.oeo_annotation_path = os.path.join(os.getcwd(), "data", "oeo_annotation")
+        self.input_dir = os.path.join(os.getcwd(), input_path)
+        self.output_dir = os.path.join(os.getcwd(), output_path)
 
-        os.makedirs(self.oeo_annotation_path, exist_ok=True)
+        os.makedirs(self.input_dir, exist_ok=True)
+        os.makedirs(self.output_dir, exist_ok=True)
 
-        self.df_dict = self.prepare_df_dict(directory=self.csv_dir)
+        self.df_dict = self.prepare_df_dict(directory=self.input_dir)
 
         self.now = datetime.now()
 
@@ -111,7 +112,7 @@ class Datahelper:
         :return:
         """
         df_dict[1].to_csv(
-            path_or_buf=f"{self.oeo_annotation_path}/{df_dict[0]}",
+            path_or_buf=f"{self.output_dir}/{df_dict[0]}",
             index=False,
             encoding="utf-8",
             sep=";",
@@ -130,11 +131,9 @@ def get_files_from_directory(directory: str = None) -> list:
 
 
 if __name__ == "__main__":
-
-    OEO_ANNOTATION_DIR = "data/oeo_annotation"
+    INPUT_PATH = "meta_data/input"
+    OUTPUT_PATH = "meta_data/output"
 
     datahelper = Datahelper()
 
-    print(datahelper.create_json_dict_from_user_defined_columns())
-
-    datahelper.insert_user_column_dict_in_csv()
+    datahelper = Datahelper(input_path=INPUT_PATH, output_path=OUTPUT_PATH)
