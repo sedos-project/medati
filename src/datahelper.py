@@ -1,11 +1,12 @@
 """
-The datahelper helps to format input data files.
+The datahelper helps to format input data files and edits metadata.
 """
 
 import sys
 import csv
 import glob
 import os
+import json
 from datetime import datetime
 
 import pandas as pd
@@ -46,6 +47,23 @@ JSON_COL_LIST = [
 ]
 
 
+def get_files_from_directory(directory: str = None, type_of_file: str = "csv") -> list:
+    """
+    The function takes a path as input and returns all csv-file paths in the directory as a list.
+    :rtype: object
+    :param directory: csv directory path
+    :return: files_path - list of csv file paths
+    :return: metadata_path - list of json file paths
+    """
+
+    if type_of_file == "csv":
+        return list(glob.glob(f"{directory}/*.csv"))
+    if type_of_file == "json":
+        return list(glob.glob(f"{directory}/*.json"))
+
+    return None
+
+
 class Datahelper:
     """
     The class helps ontologically annotating input data files and creating metadata.
@@ -61,6 +79,7 @@ class Datahelper:
         os.makedirs(self.output_dir, exist_ok=True)
 
         self.df_dict = self.prepare_df_dict(directory=self.input_dir)
+        self.dict_filename_json = self.prepare_json_dict(directory=self.input_dir)
 
         self.now = datetime.now()
 
@@ -70,11 +89,29 @@ class Datahelper:
         :param directory: Path to csv files.
         :return: df_dict: Key -> df name; Value -> df.
         """
-        files: list = get_files_from_directory(directory)
-
+        files: list = get_files_from_directory(directory, type_of_file="csv")
+        # sep=None, engine='python' will use Python’s builtin sniffer tool to determine the delimiter.
+        # This method is a rough heuristic and may produce both false positives and negatives.
         return {
-            file.split("\\")[-1]: pd.read_csv(filepath_or_buffer=file, sep=";")
+            file.split("\\")[-1].split(".")[0]: pd.read_csv(
+                filepath_or_buffer=file, sep=None, engine="python"
+            )
             for file in files
+        }
+
+    def prepare_json_dict(self, directory: str = None) -> dict:
+        """
+        The method reads all metadata json into and saves them with their names in a dict.
+        :param directory: Path to metadata json files.
+        :return: df_dict: Key -> df name; Value -> df.
+        """
+        meta_files: list = get_files_from_directory(directory, type_of_file="json")
+        print(meta_files)
+        return {
+            meta_file.split("\\")[-1].split(".")[0]: self.read_metadata_json(
+                path=meta_file
+            )
+            for meta_file in meta_files
         }
 
     def return_user_defined_columns(self):
@@ -132,31 +169,28 @@ class Datahelper:
         The method saves a dataframe as csv.
         The df is stored as value in a dict with corresponding df name as key.
         :param df_dict: Key -> df name; Value -> df.
-        :return:
         """
         df_dict[1].to_csv(
-            path_or_buf=f"{self.output_dir}/{df_dict[0]}",
+            path_or_buf=f"{self.output_dir}/{df_dict[0]}.csv",
             index=False,
             encoding="utf-8",
             sep=";",
         )
 
+    def read_metadata_json(self, path=None) -> object:
+        """
+        Read jsons.
+        :param path: Paths to json file
+        :return: JSON file
+        """
+        with open(path, "r", encoding="utf-8") as file:
+            return json.load(file)
 
-def get_files_from_directory(directory: str = None) -> list:
-    """
-    The function takes a path as input and returns all csv-file paths in the directory as a list.
-    :rtype: object
-    :param directory: csv directory path
-    :return: files - list of csv file paths
-    """
-
-    return list(glob.glob(f"{directory}/*.csv"))
+        return None
 
 
 if __name__ == "__main__":
     INPUT_PATH = "meta_data/input"
     OUTPUT_PATH = "meta_data/output"
-
-    datahelper = Datahelper()
 
     datahelper = Datahelper(input_path=INPUT_PATH, output_path=OUTPUT_PATH)
