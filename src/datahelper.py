@@ -52,23 +52,6 @@ JSON_COL_LIST = [
 ]
 
 
-def get_files_from_directory(directory: str = None, type_of_file: str = "csv") -> list:
-    """
-    The function takes a path as input and returns all csv-file paths in the directory as a list.
-    :rtype: object
-    :param directory: csv directory path
-    :return: files_path - list of csv file paths
-    :return: metadata_path - list of json file paths
-    """
-
-    if type_of_file == "csv":
-        return list(glob.glob(f"{directory}/*.csv"))
-    if type_of_file == "json":
-        return list(glob.glob(f"{directory}/*.json"))
-
-    return None
-
-
 class Datahelper:
     """
     The class helps ontologically annotating input data files and creating metadata.
@@ -94,7 +77,8 @@ class Datahelper:
         :param directory: Path to csv files.
         :return: df_dict: Key -> df name; Value -> df.
         """
-        files: list = get_files_from_directory(directory, type_of_file="csv")
+        files: list = self.get_files_from_directory(directory, type_of_file="csv")
+        print(files)
         # sep=None, engine='python' will use Python’s builtin sniffer tool to determine the delimiter.
         # This method is a rough heuristic and may produce both false positives and negatives.
         return {
@@ -110,7 +94,7 @@ class Datahelper:
         :param directory: Path to metadata json files.
         :return: df_dict: Key -> df name; Value -> df.
         """
-        meta_files: list = get_files_from_directory(directory, type_of_file="json")
+        meta_files: list = self.get_files_from_directory(directory, type_of_file="json")
         print(meta_files)
         return {
             meta_file.split("\\")[-1].split(".")[0]: self.read_metadata_json(
@@ -302,6 +286,24 @@ class Datahelper:
         """
         with open(path, "w", encoding="utf8") as json_file:
             json.dump(file, json_file, ensure_ascii=False)
+
+    def get_files_from_directory(
+        self, directory: str = None, type_of_file: str = "csv"
+    ) -> list:
+        """
+        The function takes a path as input and returns all csv-file paths in the directory as a list.
+        :rtype: object
+        :param directory: csv directory path
+        :return: files_path - list of csv file paths
+        :return: metadata_path - list of json file paths
+        """
+
+        if type_of_file == "csv":
+            return list(glob.glob(f"{directory}/*.csv"))
+        if type_of_file == "json":
+            return list(glob.glob(f"{directory}/*.json"))
+
+        return None
 
 
 if __name__ == "__main__":
