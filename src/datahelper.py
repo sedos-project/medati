@@ -2,11 +2,26 @@
 The datahelper helps to format input data files.
 """
 
+import sys
+import csv
 import glob
 import os
 from datetime import datetime
 
 import pandas as pd
+
+# avoid csv field size error
+MAXINT = sys.maxsize
+
+while True:
+    # decrease the maxInt value by factor 10
+    # as long as the OverflowError occurs.
+
+    try:
+        csv.field_size_limit(MAXINT)
+        break
+    except OverflowError:
+        MAXINT = int(MAXINT / 10)
 
 OEDATAMODEL_COL_LIST = [
     "id",
