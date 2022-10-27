@@ -141,14 +141,6 @@ class Datahelper:
 
         return json_dict_user_col
 
-    def to_dataframe(self):
-        """
-        Return DataFrame as generator object - use one DataFrame at a the time.
-        :return:DataFrame: generator object
-        """
-
-        yield from self.df_dict.values()
-
     def insert_user_column_dict_in_csv(self):
         """
         The method inserts each csv specific version dicts in respective csvs.
@@ -163,6 +155,14 @@ class Datahelper:
                 df_data[column] = f"{json_dict_user_col.get(filename)}"
 
             self.to_csv(df_dict=(filename, df_data))
+
+    def to_dataframe(self):
+        """
+        Return DataFrame as generator object - use one DataFrame at a the time.
+        :return:DataFrame: generator object
+        """
+
+        yield from self.df_dict.values()
 
     def to_csv(self, df_dict=None):
         """
@@ -186,7 +186,15 @@ class Datahelper:
         with open(path, "r", encoding="utf-8") as file:
             return json.load(file)
 
-        return None
+    def write_json(self, path: str = None, file=None):
+        """
+        Write json file
+        :param path: Path to json file
+        :param file: json file
+        :return:
+        """
+        with open(path, "w", encoding="utf8") as json_file:
+            json.dump(file, json_file, ensure_ascii=False)
 
 
 if __name__ == "__main__":
