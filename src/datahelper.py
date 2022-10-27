@@ -9,6 +9,11 @@ import os
 import json
 from datetime import datetime
 
+from difflib import SequenceMatcher
+
+from omi.oem_structures.oem_v15 import OEPMetadata
+from omi.dialects.oep.dialect import OEP_V_1_5_Dialect
+
 import pandas as pd
 
 # avoid csv field size error
@@ -184,6 +189,79 @@ class Datahelper:
             self.to_csv(df_dict=(filename, df_data))
 
         return postgre_conform_dict
+
+    def fill_resources_column_names_with_actual_column_header(self):
+        """
+        The method will create or update metadata information with actual csv column-header information.
+        :return:
+        """
+        postgresql_conform_dict = self.postgresql_conform_columns()
+
+        merge_metadata_data = self.combine_dict(
+            postgresql_conform_dict, self.dict_filename_json
+        )
+
+        for data_item in merge_metadata_data.values():
+
+            # read postgre-conform csv column header
+            csv_column_header = data_item[0].columns
+
+            metadata_user = data_item[1]
+
+            # omi
+            # metadata 1.5 instance and parse metadata_user in python dict
+            dialect1_5 = OEP_V_1_5_Dialect()
+            # parse metadata_user in python dict
+            parsed: OEPMetadata = dialect1_5._parser().parse(  # pylint: disable=W0212
+                metadata_user
+            )
+
+            for ressource in parsed.resources:
+
+                for field in ressource.schema.fields:
+                    field.name = self.similar(csv_column_header, field.name)
+
+            metadata = dialect1_5.compile_and_render(parsed)
+            metadata = json.loads(metadata)
+
+            self.write_json(
+                path=f"{self.output_dir}/{data_item[1]['name']}.json", file=metadata
+            )
+
+    def combine_dict(self, dict_1, dict_2):
+        """
+        This function merges two dicts even if the keys in the two dictionaries are different.
+        :param dict_1, dict_2: Two input dicts.
+        :return: Merged dict.
+        """
+        return {
+            k: tuple(d[k] for d in (dict_1, dict_2) if k in d)
+            for k in set(dict_1.keys()) | set(dict_2.keys())
+        }
+
+    def similar(self, csv_column_header, metadata_key):
+        """
+        The method checks the similarity of metadata and new postgresql-conform column headers and matches them.
+        :param csv_column_header:
+        :param metadata_key:
+        :return:
+        """
+        similarity_criteria = 0.8
+        sim_dict = {}
+        for csv_header in csv_column_header:
+            sim_value = SequenceMatcher(None, csv_header, metadata_key).ratio()
+            sim_dict[(csv_header, metadata_key)] = sim_value
+
+        if max(sim_dict.values()) >= similarity_criteria:
+            return max(sim_dict, key=sim_dict.get)[0]
+
+        raise ValueError(
+            f"Your metadata column name: {metadata_key} - has no similarity with the postgresql-conform "
+            f"corrected csv column headers {csv_column_header}\n"
+            f"Postgresql-conform corrected csv column headers cannot be inserted into metadata, due to missing "
+            f"match, please check manually if the column is present in your metadata.\n"
+            f"Similarity below {similarity_criteria}: {sim_dict}"
+        )
 
     def to_dataframe(self):
         """
