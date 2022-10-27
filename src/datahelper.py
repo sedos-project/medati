@@ -14,6 +14,8 @@ from difflib import SequenceMatcher
 from omi.oem_structures.oem_v15 import OEPMetadata
 from omi.dialects.oep.dialect import OEP_V_1_5_Dialect
 
+from tqdm import tqdm
+
 import pandas as pd
 
 # avoid csv field size error
@@ -78,14 +80,14 @@ class Datahelper:
         :return: df_dict: Key -> df name; Value -> df.
         """
         files: list = self.get_files_from_directory(directory, type_of_file="csv")
-        print(files)
         # sep=None, engine='python' will use Python’s builtin sniffer tool to determine the delimiter.
         # This method is a rough heuristic and may produce both false positives and negatives.
+
         return {
             file.split("\\")[-1].split(".")[0]: pd.read_csv(
                 filepath_or_buffer=file, sep=None, engine="python"
             )
-            for file in files
+            for file in tqdm(files, desc="Load Dataframes")
         }
 
     def prepare_json_dict(self, directory: str = None) -> dict:
@@ -95,12 +97,11 @@ class Datahelper:
         :return: df_dict: Key -> df name; Value -> df.
         """
         meta_files: list = self.get_files_from_directory(directory, type_of_file="json")
-        print(meta_files)
         return {
             meta_file.split("\\")[-1].split(".")[0]: self.read_metadata_json(
                 path=meta_file
             )
-            for meta_file in meta_files
+            for meta_file in tqdm(meta_files, desc="Load Metadata")
         }
 
     def return_user_defined_columns(self):
@@ -202,7 +203,6 @@ class Datahelper:
 
             # similarity isn't case-agnostic. field.name.lower() -> to enable string comparison on lowercase
             for ressource in parsed.resources:
-
                 for field in ressource.schema.fields:
                     field.name = self.similar(csv_column_header, field.name.lower())
 
