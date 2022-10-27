@@ -156,6 +156,35 @@ class Datahelper:
 
             self.to_csv(df_dict=(filename, df_data))
 
+    def postgresql_conform_columns(self):
+        """
+        The method corrects columns from csv files to be postgresql conform and saves in same csv.
+        :return: Individual df_dict: Key -> df name; Value -> dataframe.
+        """
+
+        postgre_conform_dict = {}
+        for filename, df_data in self.df_dict.items():
+
+            # column header lowercase
+            df_data.columns = df_data.columns.str.strip().str.lower()
+
+            # remove postgresql incompatible characters from csv col-header
+            postgresql_conform_to_replace = {
+                "/": "_",
+                "\\": "_",
+                " ": "_",
+                "-": "_",
+                ":": "_",
+            }
+            for key, value in postgresql_conform_to_replace.items():
+                df_data.columns = [col.replace(key, value) for col in df_data.columns]
+
+            postgre_conform_dict[filename] = df_data
+
+            self.to_csv(df_dict=(filename, df_data))
+
+        return postgre_conform_dict
+
     def to_dataframe(self):
         """
         Return DataFrame as generator object - use one DataFrame at a the time.
