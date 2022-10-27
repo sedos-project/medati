@@ -200,10 +200,11 @@ class Datahelper:
                 metadata_user
             )
 
+            # similarity isn't case-agnostic. field.name.lower() -> to enable string comparison on lowercase
             for ressource in parsed.resources:
 
                 for field in ressource.schema.fields:
-                    field.name = self.similar(csv_column_header, field.name)
+                    field.name = self.similar(csv_column_header, field.name.lower())
 
             metadata = dialect1_5.compile_and_render(parsed)
             metadata = json.loads(metadata)
@@ -235,6 +236,8 @@ class Datahelper:
         for csv_header in csv_column_header:
             sim_value = SequenceMatcher(None, csv_header, metadata_key).ratio()
             sim_dict[(csv_header, metadata_key)] = sim_value
+            if sim_value == 1:
+                break
 
         if max(sim_dict.values()) >= similarity_criteria:
             return max(sim_dict, key=sim_dict.get)[0]
