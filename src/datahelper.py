@@ -56,10 +56,49 @@ JSON_COL_LIST = [
 
 class Datahelper:
     """
-    The class helps ontologically annotating input data files and creating metadata.
+    The class helps prepare your data and metadata files for upload to the OpenEnergyPlatform.
+
+
+    Methods
+    -------
+    prepare_df_dict(self, directory: str = None) -> dict
+        reads all csv's into pd.DataFrame and save them with their filename in a dict
+    prepare_json_dict(self, directory: str = None, debug: str = None) -> dict
+        read all metadata json and save them with their filename in a dict
+    return_user_defined_columns(self) -> dict
+        return user defined columns that are neither columns of oedatamodel-parameter scalar or timeseries
+    create_json_dict_from_user_defined_columns(self) -> dict
+        read columns and return dict with column names as keys and empty value
+    insert_user_column_dict_in_csv(self) -> None
+        insert each csv specific column dicts in respective csv
+    postgresql_conform_columns(self) -> dict
+        correct columns from csv files to be postgresql-conform and save in csv
+    fill_resources_column_names_with_actual_column_header(self, number_of_datapackages: int = None) -> None
+        update metadata information with actual csv column-header information and write into repective metadata json
+    combine_dict(self, dict_1: dict, dict_2: dict) -> dict
+        merge two dicts even if the keys in the two dictionaries are different
+    similar(self, csv_column_header: list, metadata_key: str) -> str
+        check the similarity of metadata and new postgresql-conform column headers and matches them
+    to_dataframe(self) -> object
+        return single dataframe from generator
+    to_csv(self, df_dict=None) -> None
+        save a dataframe as csv
+    read_metadata_json(self, path: str = None, debug: str = None) -> object
+        read json file
+    write_json(self, path: str = None, file=None) -> None
+        write json file
+    get_files_from_directory(self, directory: str = None, type_of_file: str = "csv") -> list
+        take a path as input and returns all csv-file or json paths in the directory as a list
     """
 
-    def __init__(self, input_path: str = None, output_path: str = None):
+    def __init__(
+        self, input_path: str = None, output_path: str = None, debug: str = None
+    ):
+        """
+        :param input_path: Specify input path to csv files and metadata json
+        :param output_path: Specify output path to csv files and metadata json
+        :param debug: None or "json" - only load json files to review their format
+        """
 
         # define paths for csv and oeo_annotation folder
         self.input_dir = os.path.join(os.getcwd(), input_path)
@@ -68,16 +107,19 @@ class Datahelper:
         os.makedirs(self.input_dir, exist_ok=True)
         os.makedirs(self.output_dir, exist_ok=True)
 
-        self.df_dict = self.prepare_df_dict(directory=self.input_dir)
-        self.dict_filename_json = self.prepare_json_dict(directory=self.input_dir)
-
+        if debug != "json":
+            self.df_dict = self.prepare_df_dict(directory=self.input_dir)
+        self.dict_filename_json = self.prepare_json_dict(
+            directory=self.input_dir,
+            debug=debug,
+        )
         self.now = datetime.now()
 
     def prepare_df_dict(self, directory: str = None) -> dict:
         """
-        The method reads all csv's into pandas dataframes and saves them with their names in a dict.
-        :param directory: Path to csv files.
-        :return: df_dict: Key -> df name; Value -> df.
+        Reads all csv's into pd.DataFrame and save them with their filename in a dict.
+        :param directory: Path to csv files
+        :return: df_dict: Key -> filename; Value -> pd.DataFrame
         """
         files: list = self.get_files_from_directory(directory, type_of_file="csv")
         # sep=None, engine='python' will use Python’s builtin sniffer tool to determine the delimiter.
@@ -87,28 +129,27 @@ class Datahelper:
             file.split("\\")[-1].split(".")[0]: pd.read_csv(
                 filepath_or_buffer=file, sep=None, engine="python"
             )
-            for file in tqdm(files, desc="Load Dataframes")
+            for file in tqdm(files, desc="Load csv-files to DataFrames")
         }
 
-    def prepare_json_dict(self, directory: str = None) -> dict:
+    def prepare_json_dict(self, directory: str = None, debug: str = None) -> dict:
         """
-        The method reads all metadata json into and saves them with their names in a dict.
-        :param directory: Path to metadata json files.
-        :return: df_dict: Key -> df name; Value -> df.
+        Read all metadata json and save them with their filename in a dict.
+        :param directory: Path to metadata json files
+        :return: df_dict: Key -> filename; Value -> metadata json
         """
         meta_files: list = self.get_files_from_directory(directory, type_of_file="json")
         return {
             meta_file.split("\\")[-1].split(".")[0]: self.read_metadata_json(
-                path=meta_file
+                path=meta_file, debug=debug
             )
             for meta_file in tqdm(meta_files, desc="Load Metadata")
         }
 
-    def return_user_defined_columns(self):
+    def return_user_defined_columns(self) -> dict:
         """
-        The method returns user defined columns that are neither columns
-        of the oedatamodel-parameter scalar or timeseries.
-        :return: dict: Key -> df name: str ; Value -> user_defined_columns: dict.
+        Return user defined columns that are neither columns of oedatamodel-parameter scalar or timeseries.
+        :return: dict: Key -> filename: str ; Value -> set of user_defined_columns
         """
 
         return {
@@ -116,11 +157,11 @@ class Datahelper:
             for (df_name, value) in self.df_dict.items()
         }
 
-    def create_json_dict_from_user_defined_columns(self):
+    def create_json_dict_from_user_defined_columns(self) -> dict:
         """
-        The method reads columns and returns dict with column names as keys and empty value.
-        :param df_dict: Key -> df name; Value -> df.
-        :return: dict: Key -> df name; Value -> json_dict_from_user_defined_columns.
+        Read columns and return dict with column names as keys and empty value.
+        :param df_dict: Key -> filename; Value -> pd.DataFrame
+        :return: dict: Key -> filename; Value -> dict of user_defined_columns
         """
         user_defined_cols_dict = self.return_user_defined_columns()
 
@@ -131,9 +172,9 @@ class Datahelper:
 
         return json_dict_user_col
 
-    def insert_user_column_dict_in_csv(self):
+    def insert_user_column_dict_in_csv(self) -> None:
         """
-        The method inserts each csv specific version dicts in respective csvs.
+        Insert each csv specific column dicts in respective csv.
         :type columns: object
         :param columns: Specify one of: version, other, all
         :return:
@@ -146,14 +187,18 @@ class Datahelper:
 
             self.to_csv(df_dict=(filename, df_data))
 
-    def postgresql_conform_columns(self):
+    def postgresql_conform_columns(self) -> dict:
         """
-        The method corrects columns from csv files to be postgresql conform and saves in same csv.
-        :return: Individual df_dict: Key -> df name; Value -> dataframe.
+        The method corrects columns from csv files to be postgresql conform and saves in csv.
+        :return: df_dict: Key -> df name; Value -> pd.DataFrame
         """
 
         postgre_conform_dict = {}
-        for filename, df_data in self.df_dict.items():
+        for filename, df_data in tqdm(
+            self.df_dict.items(),
+            desc="Make csv-file columns postgresql-conform",
+            postfix=f"and save postgresql-conform tables as csv to: '{self.output_dir}'",
+        ):
 
             # column header lowercase
             df_data.columns = df_data.columns.str.strip().str.lower()
@@ -165,7 +210,24 @@ class Datahelper:
                 " ": "_",
                 "-": "_",
                 ":": "_",
+                ",": "_",
+                ".": "_",
+                "+": "_",
+                "%": "_",
+                "!": "_",
+                "?": "_",
+                "(": "_",
+                ")": "_",
+                "[": "_",
+                "]": "_",
+                "}": "_",
+                "{": "_",
+                "ß": "ss",
+                "ä": "ae",
+                "ö": "oe",
+                "ü": "ue",
             }
+
             for key, value in postgresql_conform_to_replace.items():
                 df_data.columns = [col.replace(key, value) for col in df_data.columns]
 
@@ -175,10 +237,13 @@ class Datahelper:
 
         return postgre_conform_dict
 
-    def fill_resources_column_names_with_actual_column_header(self):
+    def fill_resources_column_names_with_actual_column_header(
+        self, number_of_datapackages: int = None
+    ) -> None:
         """
-        The method will create or update metadata information with actual csv column-header information.
-        :return:
+        The method will update metadata information with actual csv column-header information and write
+        into repective metadata json.
+        :return: None
         """
         postgresql_conform_dict = self.postgresql_conform_columns()
 
@@ -186,9 +251,20 @@ class Datahelper:
             postgresql_conform_dict, self.dict_filename_json
         )
 
-        for data_item in merge_metadata_data.values():
+        if number_of_datapackages != len(merge_metadata_data.items()):
+            raise ValueError(
+                "The number of datapackages for upload does not match the number of items for internal "
+                f"processing. Csv and metadata filenames must be identical! \n At least 3 csv files "
+                f"cannot be matched with metadata:"
+                f" {len(merge_metadata_data.items())-number_of_datapackages}"
+            )
 
-            # read postgre-conform csv column header
+        for data_item in tqdm(
+            merge_metadata_data.values(),
+            desc="Fill resource column names in metadata with "
+            "postgresql-conform table headers from respective csv file",
+        ):
+
             csv_column_header = data_item[0].columns
 
             metadata_user = data_item[1]
@@ -204,7 +280,13 @@ class Datahelper:
             # similarity isn't case-agnostic. field.name.lower() -> to enable string comparison on lowercase
             for ressource in parsed.resources:
                 for field in ressource.schema.fields:
-                    field.name = self.similar(csv_column_header, field.name.lower())
+                    try:
+                        field.name = self.similar(csv_column_header, field.name.lower())
+                    except Exception as exc:
+                        raise (
+                            f"There is a problem in metadata file: {metadata_user['name']}. "
+                            f"The metadata key `name` is: {field.name}"
+                        ) from exc
 
             metadata = dialect1_5.compile_and_render(parsed)
             metadata = json.loads(metadata)
@@ -213,23 +295,24 @@ class Datahelper:
                 path=f"{self.output_dir}/{data_item[1]['name']}.json", file=metadata
             )
 
-    def combine_dict(self, dict_1, dict_2):
+    def combine_dict(self, dict_1: dict, dict_2: dict) -> dict:
         """
-        This function merges two dicts even if the keys in the two dictionaries are different.
-        :param dict_1, dict_2: Two input dicts.
-        :return: Merged dict.
+        This method merges two dicts even if the keys in the two dictionaries are different.
+        :param dict_1, dict_2: Two input dicts
+        :return: Merged dict
         """
         return {
             k: tuple(d[k] for d in (dict_1, dict_2) if k in d)
             for k in set(dict_1.keys()) | set(dict_2.keys())
         }
 
-    def similar(self, csv_column_header, metadata_key):
+    def similar(self, csv_column_header: list, metadata_key: str) -> str:
         """
-        The method checks the similarity of metadata and new postgresql-conform column headers and matches them.
-        :param csv_column_header:
-        :param metadata_key:
-        :return:
+        The method checks the similarity of metadata and new postgresql-conform column headers and matches them. It
+        returns the postgresql-conform column name.
+        :param csv_column_header: list of csv column headers, after postgresql-conform correction
+        :param metadata_key: metadata colum key from metadata file
+        :return: postgresql-conform column name
         """
         similarity_criteria = 0.8
         sim_dict = {}
@@ -250,7 +333,7 @@ class Datahelper:
             f"Similarity below {similarity_criteria}: {sim_dict}"
         )
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> object:
         """
         Return DataFrame as generator object - use one DataFrame at a the time.
         :return:DataFrame: generator object
@@ -258,11 +341,11 @@ class Datahelper:
 
         yield from self.df_dict.values()
 
-    def to_csv(self, df_dict=None):
+    def to_csv(self, df_dict=None) -> None:
         """
-        The method saves a dataframe as csv.
-        The df is stored as value in a dict with corresponding df name as key.
+        Save a dataframe as csv. The df is stored as value in a dict with corresponding df name as key.
         :param df_dict: Key -> df name; Value -> df.
+        :return None
         """
         df_dict[1].to_csv(
             path_or_buf=f"{self.output_dir}/{df_dict[0]}.csv",
@@ -271,21 +354,23 @@ class Datahelper:
             sep=";",
         )
 
-    def read_metadata_json(self, path=None) -> object:
+    def read_metadata_json(self, path: str = None, debug: str = None) -> object:
         """
-        Read jsons.
-        :param path: Paths to json file
-        :return: JSON file
+        Read json file.
+        :param path: Path to json file
+        :return: json file
         """
         with open(path, "r", encoding="utf-8") as file:
+            if debug == "json":
+                print(file)
             return json.load(file)
 
-    def write_json(self, path: str = None, file=None):
+    def write_json(self, path: str = None, file=None) -> None:
         """
-        Write json file
+        Write json file.
         :param path: Path to json file
         :param file: json file
-        :return:
+        :return: None
         """
         with open(path, "w", encoding="utf8") as json_file:
             json.dump(file, json_file, ensure_ascii=False)
@@ -294,11 +379,10 @@ class Datahelper:
         self, directory: str = None, type_of_file: str = "csv"
     ) -> list:
         """
-        The function takes a path as input and returns all csv-file paths in the directory as a list.
-        :rtype: object
-        :param directory: csv directory path
-        :return: files_path - list of csv file paths
-        :return: metadata_path - list of json file paths
+        Take path as input and returns all csv-file or json paths in the directory as a list.
+        :param directory: directory path
+        :param type_of_file: specify if csv of json file paths will be returned
+        :return: file paths
         """
 
         if type_of_file == "csv":
