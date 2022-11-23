@@ -61,33 +61,33 @@ class Datahelper:
 
     Methods
     -------
-    prepare_df_dict(self, directory: str = None) -> dict
+    _prepare_df_dict(self, directory: str = None) -> dict
         read all csv's into pd.DataFrame and save them with their filename in a dict
-    prepare_json_dict(self, directory: str = None, debug: str = None) -> dict
+    _prepare_json_dict(self, directory: str = None, debug: str = None) -> dict
         read all metadata json and save them with their filename in a dict
-    return_user_defined_columns(self) -> dict
+    _return_user_defined_columns(self) -> dict
         return user defined columns that are neither columns of oedatamodel-parameter scalar or timeseries
     create_json_dict_from_user_defined_columns(self) -> dict
         read columns and return dict with column names as keys and empty value
-    insert_user_column_dict_in_csv(self) -> None
+    insert_user_column_dict_in_csv_based_on_oedatamodel_parameter(self) -> None
         insert each csv specific column dicts in respective csv
-    postgresql_conform_columns(self) -> dict
+    make_csv_columns_postgresql_conform(self) -> dict
         correct columns from csv files to be postgresql-conform and save in csv
-    fill_resources_column_names_with_actual_column_header(self, number_of_datapackages: int = None) -> None
+    update_oemetadata_schema_fields_name_from_csv_using_similarity(self, number_of_datapackages: int = None) -> None
         update metadata information with actual csv column-header information and write into repective metadata json
-    combine_dict(self, dict_1: dict, dict_2: dict) -> dict
+    _combine_dict(self, dict_1: dict, dict_2: dict) -> dict
         merge two dicts even if the keys in the two dictionaries are different
-    similar(self, csv_column_header: list, metadata_key: str) -> str
+    _similar(self, csv_column_header: list, metadata_key: str) -> str
         check the similarity of metadata and new postgresql-conform column headers and match them
     to_dataframe(self) -> object
         return single dataframe from generator
-    to_csv(self, df_dict=None) -> None
+    _to_csv(self, df_dict=None) -> None
         save a dataframe as csv
-    read_metadata_json(self, path: str = None, debug: str = None) -> object
+    _read_metadata_json(self, path: str = None, debug: str = None) -> object
         read json file
-    write_json(self, path: str = None, file=None) -> None
+    _write_json(self, path: str = None, file=None) -> None
         write json file
-    get_files_from_directory(self, directory: str = None, type_of_file: str = "csv") -> list
+    _get_files_from_directory(self, directory: str = None, type_of_file: str = "csv") -> list
         take a path as input and return all csv-file or json paths in the directory as a list
     """
 
@@ -174,7 +174,7 @@ class Datahelper:
 
         return json_dict_user_col
 
-    def insert_user_column_dict_in_csv(self) -> None:
+    def insert_user_column_dict_in_csv_based_on_oedatamodel_parameter(self) -> None:
         """
         Insert each csv-specific column dicts in respective csv.
         :type columns: object
@@ -189,7 +189,7 @@ class Datahelper:
 
             self._to_csv(df_dict=(filename, df_data))
 
-    def postgresql_conform_columns(self) -> dict:
+    def make_csv_columns_postgresql_conform(self) -> dict:
         """
         Correct columns from csv files to be postgresql conform and save in csv.
         :return: df_dict: Key -> df name; Value -> pd.DataFrame
@@ -239,14 +239,14 @@ class Datahelper:
 
         return postgre_conform_dict
 
-    def fill_resources_column_names_with_actual_column_header(
+    def update_oemetadata_schema_fields_name_from_csv_using_similarity(
         self, number_of_datapackages: int = None
     ) -> None:
         """
         Update metadata information with actual csv column-header information and write into respective metadata json.
         :return: None
         """
-        postgresql_conform_dict = self.postgresql_conform_columns()
+        postgresql_conform_dict = self.make_csv_columns_postgresql_conform()
 
         merge_metadata_data = self._combine_dict(
             postgresql_conform_dict, self.dict_filename_json
@@ -403,6 +403,6 @@ if __name__ == "__main__":
 
     datahelper = Datahelper(input_path=INPUT_PATH, output_path=OUTPUT_PATH)
 
-    datahelper.fill_resources_column_names_with_actual_column_header(
+    datahelper.update_oemetadata_schema_fields_name_from_csv_using_similarity(
         number_of_datapackages=1
     )
