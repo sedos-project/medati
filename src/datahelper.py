@@ -108,20 +108,20 @@ class Datahelper:
         os.makedirs(self.output_dir, exist_ok=True)
 
         if debug != "json":
-            self.df_dict = self.prepare_df_dict(directory=self.input_dir)
-        self.dict_filename_json = self.prepare_json_dict(
+            self.df_dict = self._prepare_df_dict(directory=self.input_dir)
+        self.dict_filename_json = self._prepare_json_dict(
             directory=self.input_dir,
             debug=debug,
         )
         self.now = datetime.now()
 
-    def prepare_df_dict(self, directory: str = None) -> dict:
+    def _prepare_df_dict(self, directory: str = None) -> dict:
         """
         Read all csv's into pd.DataFrame and save them with their filename in a dict.
         :param directory: Path to csv files
         :return: dict: Key -> filename; Value -> pd.DataFrame
         """
-        files: list = self.get_files_from_directory(directory, type_of_file="csv")
+        files: list = self._get_files_from_directory(directory, type_of_file="csv")
         # sep=None, engine='python' will use Python’s builtin sniffer tool to determine the delimiter.
         # This method is a rough heuristic and may produce both false positives and negatives.
 
@@ -132,22 +132,24 @@ class Datahelper:
             for file in tqdm(files, desc="Load csv-files to DataFrames")
         }
 
-    def prepare_json_dict(self, directory: str = None, debug: str = None) -> dict:
+    def _prepare_json_dict(self, directory: str = None, debug: str = None) -> dict:
         """
         Read all metadata json and save them with their filename in a dict.
         :param directory: Path to metadata json files
         :param debug: If set to "json" print json in read_metadata_json()
         :return: dict: Key -> filename; Value -> metadata json
         """
-        meta_files: list = self.get_files_from_directory(directory, type_of_file="json")
+        meta_files: list = self._get_files_from_directory(
+            directory, type_of_file="json"
+        )
         return {
-            meta_file.split("\\")[-1].split(".")[0]: self.read_metadata_json(
+            meta_file.split("\\")[-1].split(".")[0]: self._read_metadata_json(
                 path=meta_file, debug=debug
             )
             for meta_file in tqdm(meta_files, desc="Load Metadata")
         }
 
-    def return_user_defined_columns(self) -> dict:
+    def _return_user_defined_columns(self) -> dict:
         """
         Return user-defined columns that are neither columns of oedatamodel-parameter scalar or timeseries.
         :return: dict: Key -> filename: str ; Value -> set of user_defined_columns
@@ -163,7 +165,7 @@ class Datahelper:
         Read columns and return dict with column names as keys and empty value.
         :return: dict: Key -> filename; Value -> dict of user_defined_columns
         """
-        user_defined_cols_dict = self.return_user_defined_columns()
+        user_defined_cols_dict = self._return_user_defined_columns()
 
         json_dict_user_col = {}
         for df_name, user_cols in user_defined_cols_dict.items():
@@ -185,7 +187,7 @@ class Datahelper:
             for column in JSON_COL_LIST:
                 df_data[column] = f"{json_dict_user_col.get(filename)}"
 
-            self.to_csv(df_dict=(filename, df_data))
+            self._to_csv(df_dict=(filename, df_data))
 
     def postgresql_conform_columns(self) -> dict:
         """
@@ -233,7 +235,7 @@ class Datahelper:
 
             postgre_conform_dict[filename] = df_data
 
-            self.to_csv(df_dict=(filename, df_data))
+            self._to_csv(df_dict=(filename, df_data))
 
         return postgre_conform_dict
 
@@ -246,7 +248,7 @@ class Datahelper:
         """
         postgresql_conform_dict = self.postgresql_conform_columns()
 
-        merge_metadata_data = self.combine_dict(
+        merge_metadata_data = self._combine_dict(
             postgresql_conform_dict, self.dict_filename_json
         )
 
@@ -280,7 +282,9 @@ class Datahelper:
             for ressource in parsed.resources:
                 for field in ressource.schema.fields:
                     try:
-                        field.name = self.similar(csv_column_header, field.name.lower())
+                        field.name = self._similar(
+                            csv_column_header, field.name.lower()
+                        )
                     except Exception as exc:
                         raise Exception(
                             f"There is a problem in metadata file: {metadata_user['name']}. "
@@ -290,11 +294,11 @@ class Datahelper:
             metadata = dialect1_5.compile_and_render(parsed)
             metadata = json.loads(metadata)
 
-            self.write_json(
+            self._write_json(
                 path=f"{self.output_dir}/{data_item[1]['name']}.json", file=metadata
             )
 
-    def combine_dict(self, dict_1: dict, dict_2: dict) -> dict:
+    def _combine_dict(self, dict_1: dict, dict_2: dict) -> dict:
         """
         This method merges two dicts even if the keys in the two dictionaries are different.
         :param dict_1, dict_2: Two input dicts
@@ -305,7 +309,7 @@ class Datahelper:
             for k in set(dict_1.keys()) | set(dict_2.keys())
         }
 
-    def similar(self, csv_column_header: list, metadata_key: str) -> str:
+    def _similar(self, csv_column_header: list, metadata_key: str) -> str:
         """
         Check the similarity of metadata and new postgresql-conform column headers and match them. Return the
         postgresql-conform column name.
@@ -340,7 +344,7 @@ class Datahelper:
 
         yield from self.df_dict.values()
 
-    def to_csv(self, df_dict=None) -> None:
+    def _to_csv(self, df_dict=None) -> None:
         """
         Save a pd.DataFrame to csv.
         :param df_dict: Key -> filename; Value -> pd.DataFrame.
@@ -353,7 +357,7 @@ class Datahelper:
             sep=";",
         )
 
-    def read_metadata_json(self, path: str = None, debug: str = None) -> object:
+    def _read_metadata_json(self, path: str = None, debug: str = None) -> object:
         """
         Read json file.
         :param path: Path to json file
@@ -365,7 +369,7 @@ class Datahelper:
                 print(file)
             return json.load(file)
 
-    def write_json(self, path: str = None, file=None) -> None:
+    def _write_json(self, path: str = None, file=None) -> None:
         """
         Write json file.
         :param path: Path to json file
@@ -375,7 +379,7 @@ class Datahelper:
         with open(path, "w", encoding="utf8") as json_file:
             json.dump(file, json_file, ensure_ascii=False)
 
-    def get_files_from_directory(
+    def _get_files_from_directory(
         self, directory: str = None, type_of_file: str = "csv"
     ) -> list:
         """
