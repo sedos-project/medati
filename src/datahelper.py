@@ -63,7 +63,7 @@ class Datahelper:
     -------
     _prepare_df_dict(self, directory: str = None) -> dict
         read all csv's into pd.DataFrame and save them with their filename in a dict
-    _prepare_json_dict(self, directory: str = None, debug: str = None) -> dict
+    _prepare_json_dict(self, directory: str = None) -> dict
         read all metadata json and save them with their filename in a dict
     _return_user_defined_columns(self) -> dict
         return user defined columns that are neither columns of oedatamodel-parameter scalar or timeseries
@@ -83,7 +83,7 @@ class Datahelper:
         return single dataframe from generator
     _to_csv(self, df_dict=None) -> None
         save a dataframe as csv
-    _read_metadata_json(self, path: str = None, debug: str = None) -> object
+    _read_metadata_json(self, path: str = None) -> object
         read json file
     _write_json(self, path: str = None, file=None) -> None
         write json file
@@ -91,13 +91,10 @@ class Datahelper:
         take a path as input and return all csv-file or json paths in the directory as a list
     """
 
-    def __init__(
-        self, input_path: str = None, output_path: str = None, debug: str = None
-    ):
+    def __init__(self, input_path: str = None, output_path: str = None):
         """
         :param input_path: Specify input path to csv files and metadata json
         :param output_path: Specify output path to csv files and metadata json
-        :param debug: None or "json" - only load json files to review their format
         """
 
         # define paths for csv and oeo_annotation folder
@@ -107,12 +104,8 @@ class Datahelper:
         os.makedirs(self.input_dir, exist_ok=True)
         os.makedirs(self.output_dir, exist_ok=True)
 
-        if debug != "json":
-            self.df_dict = self._prepare_df_dict(directory=self.input_dir)
-        self.dict_filename_json = self._prepare_json_dict(
-            directory=self.input_dir,
-            debug=debug,
-        )
+        self.df_dict = self._prepare_df_dict(directory=self.input_dir)
+        self.dict_filename_json = self._prepare_json_dict(directory=self.input_dir)
         self.now = datetime.now()
 
     def _prepare_df_dict(self, directory: str = None) -> dict:
@@ -132,11 +125,10 @@ class Datahelper:
             for file in tqdm(files, desc="Load csv-files to DataFrames")
         }
 
-    def _prepare_json_dict(self, directory: str = None, debug: str = None) -> dict:
+    def _prepare_json_dict(self, directory: str = None) -> dict:
         """
         Read all metadata json and save them with their filename in a dict.
         :param directory: Path to metadata json files
-        :param debug: If set to "json" print json in read_metadata_json()
         :return: dict: Key -> filename; Value -> metadata json
         """
         meta_files: list = self._get_files_from_directory(
@@ -144,7 +136,7 @@ class Datahelper:
         )
         return {
             meta_file.split("\\")[-1].split(".")[0]: self._read_metadata_json(
-                path=meta_file, debug=debug
+                path=meta_file
             )
             for meta_file in tqdm(meta_files, desc="Load Metadata")
         }
@@ -357,16 +349,13 @@ class Datahelper:
             sep=";",
         )
 
-    def _read_metadata_json(self, path: str = None, debug: str = None) -> object:
+    def _read_metadata_json(self, path: str = None) -> object:
         """
         Read json file.
         :param path: Path to json file
-        :param debug: If set to "json" print json
         :return: json file
         """
         with open(path, "r", encoding="utf-8") as file:
-            if debug == "json":
-                print(file)
             return json.load(file)
 
     def _write_json(self, path: str = None, file=None) -> None:
