@@ -1,5 +1,5 @@
 """
-The datahelper helps to format input data files and edits metadata.
+Medati helps to format input data files and edits metadata.
 """
 
 import sys
@@ -52,7 +52,7 @@ JSON_COL_LIST = [
 ]
 
 
-class Datahelper:
+class Medati:
     """
     The class helps prepare data and metadata files for upload to the OpenEnergyPlatform.
 
@@ -329,17 +329,17 @@ if __name__ == "__main__":
         df = tuple_data_metadata[0]
         meta = tuple_data_metadata[1]
 
-        datahelper = Datahelper(dataframe=df, metadata=meta)
+        medati = Medati(dataframe=df, metadata=meta)
 
         # update metadata
-        datahelper.update_oemetadata_schema_fields_name_from_csv_using_similarity()
+        medati.update_oemetadata_schema_fields_name_from_csv_using_similarity()
         # insert user-col dict in df
-        datahelper.insert_user_column_dict_in_csv_based_on_oedatamodel_parameter()
+        medati.insert_user_column_dict_in_csv_based_on_oedatamodel_parameter()
 
         # save df to csv
 
         print(f"Save {table_name}.csv in:{OUTPUT_PATH}")
-        datahelper.dataframe.to_csv(
+        medati.dataframe.to_csv(
             path_or_buf=f"{OUTPUT_PATH}/{table_name}.csv",
             index=False,
             encoding="utf-8",
@@ -348,4 +348,4 @@ if __name__ == "__main__":
 
         # save updated metadata
         print(f"Save {table_name}.json in:{OUTPUT_PATH}")
-        write_json(path=f"{OUTPUT_PATH}/{table_name}.json", file=datahelper.metadata)
+        write_json(path=f"{OUTPUT_PATH}/{table_name}.json", file=medati.metadata)
