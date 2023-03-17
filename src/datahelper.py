@@ -73,7 +73,7 @@ class Datahelper:
         insert each csv specific column dicts in respective csv
     make_csv_columns_postgresql_conform(self) -> dict
         correct columns from csv files to be postgresql-conform and save in csv
-    update_oemetadata_schema_fields_name_from_csv_using_similarity(self, number_of_datapackages: int = None) -> None
+    update_oemetadata_schema_fields_name_from_csv_using_similarity(self) -> None
         update metadata information with actual csv column-header information and write into repective metadata json
     _combine_dict(self, dict_1: dict, dict_2: dict) -> dict
         merge two dicts even if the keys in the two dictionaries are different
@@ -231,9 +231,7 @@ class Datahelper:
 
         return postgre_conform_dict
 
-    def update_oemetadata_schema_fields_name_from_csv_using_similarity(
-        self, number_of_datapackages: int = None
-    ) -> None:
+    def update_oemetadata_schema_fields_name_from_csv_using_similarity(self) -> None:
         """
         Update metadata information with actual csv column-header information and write into respective metadata json.
         :return: None
@@ -243,14 +241,6 @@ class Datahelper:
         merge_metadata_data = self._combine_dict(
             postgresql_conform_dict, self.dict_filename_json
         )
-
-        if number_of_datapackages != len(merge_metadata_data.items()):
-            raise ValueError(
-                "The number of datapackages for upload does not match the number of items for internal "
-                f"processing. \n At least {len(merge_metadata_data.items())-number_of_datapackages} csv files "
-                f"cannot be matched with metadata. Csv and metadata filenames must be identical! \n Ensure the "
-                f"parameter `number_of_datapackages` reflects the number of datapackages you want to upload."
-            )
 
         for data_item in tqdm(
             merge_metadata_data.values(),
