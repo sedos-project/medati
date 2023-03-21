@@ -10,6 +10,7 @@ The class helps prepare data and metadata files for upload to the OpenEnergyPlat
 * make column header postgresql-conform
 * update OEMetadata field names, with postgresql-conform column names
 
+```
     Methods
     -------
 
@@ -25,3 +26,4 @@ The class helps prepare data and metadata files for upload to the OpenEnergyPlat
         update metadata information with actual csv column-header information and write into repective metadata json
 
     """
+```
